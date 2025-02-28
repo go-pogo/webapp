@@ -35,3 +35,12 @@ func Shutdown(ctx context.Context, targets ...func(ctx context.Context) error) e
 	}
 	return errors.Wrap(wg.Wait(), ErrDuringShutdown)
 }
+
+// ShutdownTimeout calls all targets and blocks until all are called and have
+// returned, or when the timeout elapses. Returned errors from these functions
+// are collected and returned at the end.
+func ShutdownTimeout(ctx context.Context, timeout time.Duration, targets ...func(ctx context.Context) error) error {
+	ctx, cancelFn := context.WithTimeout(ctx, timeout)
+	defer cancelFn()
+	return Shutdown(ctx, targets...)
+}
