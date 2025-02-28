@@ -6,9 +6,10 @@ package webapp
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-pogo/errors"
-	"github.com/go-pogo/webapp/waitgroup"
+	"github.com/go-pogo/webapp/contextgroup"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 func Run(ctx context.Context, targets ...func(ctx context.Context) error) error {
-	wg := waitgroup.WithNotifyContext(ctx)
+	wg := contextgroup.WithNotifyContext(ctx)
 	for i := range targets {
 		wg.Go(targets[i])
 	}
@@ -28,7 +29,7 @@ func Run(ctx context.Context, targets ...func(ctx context.Context) error) error 
 // Shutdown calls all targets and blocks until all are called and have returned.
 // Returned errors from these functions are collected and returned at the end.
 func Shutdown(ctx context.Context, targets ...func(ctx context.Context) error) error {
-	wg := waitgroup.WithContext(ctx)
+	wg := contextgroup.New(ctx)
 	for i := range targets {
 		wg.Go(targets[i])
 	}
