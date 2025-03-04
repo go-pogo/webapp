@@ -7,7 +7,7 @@ require (
 	github.com/go-pogo/buildinfo v0.7.4
 	github.com/go-pogo/easytls v0.1.4
 	github.com/go-pogo/errors v0.12.0
-	github.com/go-pogo/healthcheck v0.2.0
+	github.com/go-pogo/healthcheck v0.2.1
 	github.com/go-pogo/serv v0.5.3
 	github.com/go-pogo/telemetry v0.2.1
 	github.com/rs/zerolog v1.33.0
