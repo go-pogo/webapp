@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/go-pogo/errors"
-	"github.com/go-pogo/webapp/contextgroup"
+	"github.com/go-pogo/errors/errgroup"
+	"github.com/go-pogo/webapp/rungroup"
 )
 
 const (
@@ -18,22 +19,24 @@ const (
 )
 
 func Run(ctx context.Context, targets ...func(ctx context.Context) error) error {
-	wg := contextgroup.WithNotifyContext(ctx)
+	grp := rungroup.New(ctx)
 	for i := range targets {
-		wg.Go(targets[i])
+		grp.Go(targets[i])
 	}
 
-	return errors.Wrap(wg.Wait(), ErrDuringRun)
+	return errors.Wrap(grp.Wait(), ErrDuringRun)
 }
 
 // Shutdown calls all targets and blocks until all are called and have returned.
 // Returned errors from these functions are collected and returned at the end.
 func Shutdown(ctx context.Context, targets ...func(ctx context.Context) error) error {
-	wg := contextgroup.New(ctx)
+	var grp errgroup.Group
 	for i := range targets {
-		wg.Go(targets[i])
+		grp.Go(func() error {
+			return targets[i](ctx)
+		})
 	}
-	return errors.Wrap(wg.Wait(), ErrDuringShutdown)
+	return errors.Wrap(grp.Wait(), ErrDuringShutdown)
 }
 
 // ShutdownTimeout calls all targets and blocks until all are called and have
