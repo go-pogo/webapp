@@ -109,16 +109,16 @@ func (l *Logger) LogServerClose(name string) {
 		Msg("server closing")
 }
 
-// LogAccess is part of the [accesslog.Logger] interface.
+// LogAccess is part of the [accesslog.Logger] interface. Default log level is
+// [zerolog.InfoLevel]. Every status code indicating an error is logged as
+// [zerolog.WarnLevel]. All remaining requests to the [HealthCheckRoute] are
+// logged as [zerolog.DebugLevel]
 func (l *Logger) LogAccess(_ context.Context, det accesslog.Details, req *http.Request) {
-	var lvl zerolog.Level
-	switch true {
-	case det.HandlerName == HealthCheckRoute:
-		lvl = zerolog.DebugLevel
-	case det.StatusCode >= 400:
+	lvl := zerolog.InfoLevel
+	if det.StatusCode >= 400 {
 		lvl = zerolog.WarnLevel
-	default:
-		lvl = zerolog.InfoLevel
+	} else if det.HandlerName == HealthCheckRoute {
+		lvl = zerolog.DebugLevel
 	}
 
 	l.Logger.WithLevel(lvl).
