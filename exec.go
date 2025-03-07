@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-pogo/errors"
-	"github.com/go-pogo/errors/errgroup"
+	"github.com/go-pogo/webapp/ctxgroup"
 	"github.com/go-pogo/webapp/rungroup"
 )
 
@@ -30,11 +30,9 @@ func Run(ctx context.Context, targets ...func(ctx context.Context) error) error 
 // Shutdown calls all targets and blocks until all are called and have returned.
 // Returned errors from these functions are collected and returned at the end.
 func Shutdown(ctx context.Context, targets ...func(ctx context.Context) error) error {
-	var grp errgroup.Group
+	grp := ctxgroup.New(ctx)
 	for i := range targets {
-		grp.Go(func() error {
-			return targets[i](ctx)
-		})
+		grp.Go(targets[i])
 	}
 	return errors.Wrap(grp.Wait(), ErrDuringShutdown)
 }
