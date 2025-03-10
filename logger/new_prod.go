@@ -4,6 +4,6 @@
 
 //go:build !dev
 
-package webapp
+package logger
 
-func NewLogger(conf LoggerConfig) *Logger { return NewProductionLogger(conf) }
+func New(conf Config) *Logger { return NewProductionLogger(conf) }

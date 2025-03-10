@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package webapp
+package logger
 
 import (
 	"context"
@@ -12,21 +12,38 @@ import (
 	"path"
 	"time"
 
+	"github.com/go-logr/zerologr"
 	"github.com/go-pogo/buildinfo"
 	"github.com/go-pogo/healthcheck"
 	"github.com/go-pogo/healthcheck/healthclient"
 	"github.com/go-pogo/serv"
 	"github.com/go-pogo/serv/accesslog"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
 )
 
-type LoggerConfig struct {
+type BuildInfoLogger interface {
+	LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string)
+}
+
+type RegisterRouteLogger interface {
+	LogRegisterRoute(route serv.Route)
+}
+
+type OTELLoggerSetter interface {
+	SetOTELLogger()
+}
+
+type Config struct {
 	Level         zerolog.Level `env:"LOG_LEVEL" default:"debug"`
 	WithTimestamp bool          `env:"LOG_TIMESTAMP" default:"true"`
 }
 
 var (
-	_ registerRouteLogger = (*Logger)(nil)
+	_ BuildInfoLogger     = (*Logger)(nil)
+	_ RegisterRouteLogger = (*Logger)(nil)
+	_ OTELLoggerSetter    = (*Logger)(nil)
+
 	_ serv.Logger         = (*Logger)(nil)
 	_ accesslog.Logger    = (*Logger)(nil)
 	_ healthcheck.Logger  = (*Logger)(nil)
@@ -35,17 +52,17 @@ var (
 
 type Logger struct{ zerolog.Logger }
 
-func NewProductionLogger(conf LoggerConfig) *Logger {
+func NewProductionLogger(conf Config) *Logger {
 	return newLogger(os.Stdout, conf)
 }
 
-func NewDevelopmentLogger(conf LoggerConfig) *Logger {
+func NewDevelopmentLogger(conf Config) *Logger {
 	out := zerolog.NewConsoleWriter()
 	out.TimeFormat = time.StampMilli
 	return newLogger(out, conf)
 }
 
-func newLogger(out io.Writer, conf LoggerConfig) *Logger {
+func newLogger(out io.Writer, conf Config) *Logger {
 	log := zerolog.New(out).Level(conf.Level)
 	if conf.WithTimestamp {
 		log = log.With().Timestamp().Logger()
@@ -117,7 +134,7 @@ func (l *Logger) LogAccess(_ context.Context, det accesslog.Details, req *http.R
 	lvl := zerolog.InfoLevel
 	if det.StatusCode >= 400 {
 		lvl = zerolog.WarnLevel
-	} else if det.HandlerName == HealthCheckRoute {
+	} else if det.HandlerName == "healthcheck" {
 		lvl = zerolog.DebugLevel
 	}
 
@@ -162,4 +179,13 @@ func (l *Logger) LogHealthCheckFailed(stat healthcheck.Status, err error) {
 	l.Logger.Err(err).
 		Stringer("status", stat).
 		Msg("health check failed")
+}
+
+func (l *Logger) SetOTELLogger() {
+	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
+		l.Logger.Err(err).Msg("otel error")
+	}))
+
+	zl := l.Logger.Level(zerolog.DebugLevel)
+	otel.SetLogger(zerologr.New(&zl))
 }

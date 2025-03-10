@@ -12,9 +12,11 @@ import (
 	"github.com/go-pogo/easytls"
 	"github.com/go-pogo/errors"
 	"github.com/go-pogo/healthcheck"
+	"github.com/go-pogo/healthcheck/healthclient"
 	"github.com/go-pogo/serv"
 	"github.com/go-pogo/serv/accesslog"
 	"github.com/go-pogo/telemetry"
+	"github.com/go-pogo/webapp/logger"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -23,10 +25,20 @@ const (
 	ErrSetupServer  errors.Msg = "failed to setup server"
 )
 
+type Logger interface {
+	logger.BuildInfoLogger
+	logger.RegisterRouteLogger
+	logger.OTELLoggerSetter
+
+	serv.Logger
+	accesslog.Logger
+	healthcheck.Logger
+	healthclient.Logger
+}
+
 var _ healthcheck.HealthChecker = (*Base)(nil)
 
 type Base struct {
-	log    *Logger
 	build  *buildinfo.BuildInfo
 	telem  *telemetry.Telemetry
 	health *healthcheck.Checker
@@ -34,14 +46,9 @@ type Base struct {
 	server serv.Server
 }
 
-func New(name string, log *Logger, opts ...Option) (*Base, error) {
+func New(name string, opts ...Option) (*Base, error) {
 	conf := config{name: name}
-	base := &Base{
-		router: &router{
-			ServeMux: serv.NewServeMux(),
-			log:      log,
-		},
-	}
+	base := &Base{router: &router{ServeMux: serv.NewServeMux()}}
 
 	// apply options
 	var err error
@@ -59,7 +66,7 @@ func New(name string, log *Logger, opts ...Option) (*Base, error) {
 	if err = base.server.With(
 		conf.server.Port,
 		serv.WithName(conf.name),
-		serv.WithLogger(log),
+		serv.WithLogger(conf.servLogger()),
 		serv.WithTLSConfig(easytls.DefaultTLSConfig(), conf.server.TLS),
 	); err != nil {
 		return nil, errors.Wrap(err, ErrSetupServer)
@@ -68,7 +75,7 @@ func New(name string, log *Logger, opts ...Option) (*Base, error) {
 	// wrap router
 	var handler http.Handler = base.router
 	if conf.server.AccessLog {
-		handler = accesslog.Middleware(log, handler)
+		handler = accesslog.Middleware(conf.accessLogger(), handler)
 	}
 	if base.telem != nil {
 		handler = otelhttp.NewHandler(handler, name,
@@ -81,8 +88,6 @@ func New(name string, log *Logger, opts ...Option) (*Base, error) {
 	base.server.Handler = handler
 	return base, nil
 }
-
-func (base *Base) Logger() *Logger { return base.log }
 
 func (base *Base) Telemetry() *telemetry.Telemetry { return base.telem }
 

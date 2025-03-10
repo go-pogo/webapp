@@ -4,7 +4,7 @@
 
 //go:build dev
 
-package webapp
+package logger
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewLogger(conf LoggerConfig) *Logger { return NewDevelopmentLogger(conf) }
+func New(conf Config) *Logger { return NewDevelopmentLogger(conf) }
 
 func init() {
 	zerolog.ErrorMarshalFunc = func(err error) interface{} {

@@ -8,18 +8,15 @@ import (
 	"net/http"
 
 	"github.com/go-pogo/serv"
+	"github.com/go-pogo/webapp/logger"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-type registerRouteLogger interface {
-	LogRegisterRoute(route serv.Route)
-}
 
 var _ serv.Router = (*router)(nil)
 
 type router struct {
 	*serv.ServeMux
-	log registerRouteLogger
+	log logger.RegisterRouteLogger
 }
 
 func (mux *router) Handle(pattern string, handler http.Handler) {

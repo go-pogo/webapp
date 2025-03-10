@@ -7,15 +7,12 @@ package webapp
 import (
 	"net/http"
 
-	"github.com/go-logr/zerologr"
 	"github.com/go-pogo/buildinfo"
 	"github.com/go-pogo/easytls"
 	"github.com/go-pogo/healthcheck"
 	"github.com/go-pogo/serv"
 	"github.com/go-pogo/serv/accesslog"
 	"github.com/go-pogo/telemetry"
-	"github.com/rs/zerolog"
-	"go.opentelemetry.io/otel"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 )
 
@@ -36,6 +33,15 @@ type Option func(base *Base, config *config) error
 type config struct {
 	name   string
 	server ServerConfig
+	logger Logger
+}
+
+func WithLogger(log Logger) Option {
+	return func(base *Base, config *config) error {
+		base.router.log = log
+		config.logger = log
+		return nil
+	}
 }
 
 func WithBuildInfo(bld *buildinfo.BuildInfo) Option {
@@ -63,8 +69,8 @@ func WithBuildInfoVersion(altVersion string, modules ...string) Option {
 		}
 
 		if optFn := WithBuildInfo(bld); optFn != nil {
-			if base.log != nil {
-				base.log.LogBuildInfo(bld, modules...)
+			if config.logger != nil {
+				config.logger.LogBuildInfo(bld, modules...)
 			}
 			return optFn(base, config)
 		}
@@ -85,14 +91,8 @@ func WithTelemetryConfig(conf telemetry.Config) Option {
 		if err != nil {
 			return err
 		}
-
-		if base.log != nil {
-			otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-				base.log.Logger.Err(err).Msg("otel error")
-			}))
-
-			zl := base.log.Logger.Level(zerolog.DebugLevel)
-			otel.SetLogger(zerologr.New(&zl))
+		if config.logger != nil {
+			config.logger.SetOTELLogger()
 		}
 		return nil
 	}
@@ -148,4 +148,18 @@ func WithIgnoreFaviconRoute() Option {
 		})
 		return nil
 	}
+}
+
+func (c config) servLogger() serv.Logger {
+	if c.logger == nil {
+		return serv.NopLogger()
+	}
+	return c.logger
+}
+
+func (c config) accessLogger() accesslog.Logger {
+	if c.logger == nil {
+		return accesslog.NopLogger()
+	}
+	return c.logger
 }
