@@ -44,9 +44,6 @@ func New(parent context.Context, signals ...os.Signal) *Group {
 
 func (g *Group) init(ctx context.Context, signals []os.Signal) {
 	g.initOnce.Do(func() {
-		if ctx == nil {
-			ctx = context.Background()
-		}
 		if signals == nil {
 			signals = []os.Signal{syscall.SIGINT, syscall.SIGTERM}
 		}
@@ -60,7 +57,7 @@ func (g *Group) init(ctx context.Context, signals []os.Signal) {
 // the internal context is canceled. It then returns all collected errors as a
 // (multi) error (if any).
 func (g *Group) Wait() error {
-	g.init(nil, nil)
+	g.init(context.Background(), nil)
 	go func() {
 		// stop receiving signals when g.grp is done
 		defer g.stopNotify()
@@ -76,7 +73,7 @@ func (g *Group) Wait() error {
 // Go calls the given function in a new goroutine. The [Group]'s internal
 // context is passed as argument to the function.
 func (g *Group) Go(fn func(ctx context.Context) error) {
-	g.init(nil, nil)
+	g.init(context.Background(), nil)
 	g.grp.Go(func() error {
 		return fn(g.ctx)
 	})
