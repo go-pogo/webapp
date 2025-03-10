@@ -108,6 +108,11 @@ func WithServerConfig(conf ServerConfig) Option {
 func WithHealthChecker(opts ...healthcheck.Option) Option {
 	return func(base *Base, config *config) error {
 		var err error
+		if config.logger != nil {
+			pre := []healthcheck.Option{healthcheck.WithLogger(config.logger)}
+			opts = append(pre, opts...)
+		}
+
 		base.health, err = healthcheck.New(opts...)
 		if err != nil {
 			return err
