@@ -71,7 +71,7 @@ func newLogger(out io.Writer, conf Config) *Logger {
 }
 
 func (l *Logger) LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string) {
-	event := l.Logger.Info().
+	event := l.Info().
 		Str("go_version", bld.GoVersion()).
 		Str("version", bld.Version()).
 		Str("vcs_revision", bld.Revision()).
@@ -87,7 +87,7 @@ func (l *Logger) LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string) {
 }
 
 func (l *Logger) LogRegisterRoute(route serv.Route) {
-	l.Logger.Debug().
+	l.Debug().
 		Str("name", route.Name).
 		Str("method", route.Method).
 		Str("pattern", route.Pattern).
@@ -96,7 +96,7 @@ func (l *Logger) LogRegisterRoute(route serv.Route) {
 
 // LogServerStart is part of the [serv.Logger] interface.
 func (l *Logger) LogServerStart(name, addr string) {
-	l.Logger.Info().
+	l.Info().
 		Str("name", name).
 		Str("addr", addr).
 		Msg("server starting")
@@ -104,7 +104,7 @@ func (l *Logger) LogServerStart(name, addr string) {
 
 // LogServerStartTLS is part of the [serv.Logger] interface.
 func (l *Logger) LogServerStartTLS(name, addr, certFile, keyFile string) {
-	l.Logger.Info().
+	l.Info().
 		Str("name", name).
 		Str("addr", addr).
 		Str("cert_file", certFile).
@@ -114,14 +114,14 @@ func (l *Logger) LogServerStartTLS(name, addr, certFile, keyFile string) {
 
 // LogServerShutdown is part of the [serv.Logger] interface.
 func (l *Logger) LogServerShutdown(name string) {
-	l.Logger.Info().
+	l.Info().
 		Str("name", name).
 		Msg("server shutting down")
 }
 
 // LogServerClose is part of the [serv.Logger] interface.
 func (l *Logger) LogServerClose(name string) {
-	l.Logger.Info().
+	l.Info().
 		Str("name", name).
 		Msg("server closing")
 }
@@ -138,7 +138,7 @@ func (l *Logger) LogAccess(_ context.Context, det accesslog.Details, req *http.R
 		lvl = zerolog.DebugLevel
 	}
 
-	l.Logger.WithLevel(lvl).
+	l.WithLevel(lvl).
 		Str("server", det.ServerName).
 		Str("handler", det.HandlerName).
 		Str("user_agent", det.UserAgent).
@@ -154,13 +154,13 @@ func (l *Logger) LogAccess(_ context.Context, det accesslog.Details, req *http.R
 
 // LogHealthChanged is part of the [healthcheck.Logger] interface.
 func (l *Logger) LogHealthChanged(status, oldStatus healthcheck.Status, details map[string]healthcheck.Status) {
-	l.Logger.Info().
+	l.Info().
 		Stringer("status", status).
 		Stringer("old_status", oldStatus).
 		Msg("health changed")
 
 	for name, stat := range details {
-		l.Logger.Debug().
+		l.Debug().
 			Str("name", name).
 			Stringer("status", stat).
 			Msg("health")
@@ -169,23 +169,23 @@ func (l *Logger) LogHealthChanged(status, oldStatus healthcheck.Status, details 
 
 // LogHealthChecked is part of the [healthclient.Logger] interface.
 func (l *Logger) LogHealthChecked(stat healthcheck.Status) {
-	l.Logger.Info().
+	l.Info().
 		Stringer("status", stat).
 		Msg("health checked")
 }
 
 // LogHealthCheckFailed is part of the [healthclient.Logger] interface.
 func (l *Logger) LogHealthCheckFailed(stat healthcheck.Status, err error) {
-	l.Logger.Err(err).
+	l.Err(err).
 		Stringer("status", stat).
 		Msg("health check failed")
 }
 
 func (l *Logger) SetOTELLogger() {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		l.Logger.Err(err).Msg("otel error")
+		l.Err(err).Msg("otel error")
 	}))
 
-	zl := l.Logger.Level(zerolog.DebugLevel)
+	zl := l.Level(zerolog.DebugLevel)
 	otel.SetLogger(zerologr.New(&zl))
 }
