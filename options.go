@@ -31,9 +31,10 @@ type ServerConfig struct {
 type Option func(base *Base, config *config) error
 
 type config struct {
-	name   string
-	server ServerConfig
-	logger Logger
+	name     string
+	server   ServerConfig
+	servOpts []serv.Option
+	logger   Logger
 }
 
 func WithLogger(log Logger) Option {
@@ -101,6 +102,16 @@ func WithTelemetryConfig(conf telemetry.Config) Option {
 func WithServerConfig(conf ServerConfig) Option {
 	return func(_ *Base, config *config) error {
 		config.server = conf
+		return nil
+	}
+}
+
+func WithServerOption(opts ...serv.Option) Option {
+	return func(_ *Base, config *config) error {
+		if config.servOpts == nil {
+			config.servOpts = make([]serv.Option, 0, len(opts))
+		}
+		config.servOpts = append(config.servOpts, opts...)
 		return nil
 	}
 }

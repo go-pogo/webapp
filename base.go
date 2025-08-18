@@ -68,6 +68,7 @@ func New(name string, opts ...Option) (*Base, error) {
 		serv.WithName(conf.name),
 		serv.WithLogger(conf.servLogger()),
 		serv.WithTLSConfig(easytls.DefaultTLSConfig(), conf.server.TLS),
+		serv.With(conf.servOpts),
 	); err != nil {
 		return nil, errors.Wrap(err, ErrSetupServer)
 	}
