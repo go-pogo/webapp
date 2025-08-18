@@ -50,12 +50,16 @@ var (
 	_ healthclient.Logger = (*Logger)(nil)
 )
 
+// Logger wraps a [zerolog.Logger] and implements several log interfaces.
 type Logger struct{ zerolog.Logger }
 
+// NewProductionLogger returns a production ready Logger.
 func NewProductionLogger(conf Config) *Logger {
 	return newLogger(os.Stdout, conf)
 }
 
+// NewDevelopmentLogger returns a Logger configured for development
+// environments.
 func NewDevelopmentLogger(conf Config) *Logger {
 	out := zerolog.NewConsoleWriter()
 	out.TimeFormat = time.StampMilli
@@ -70,6 +74,7 @@ func newLogger(out io.Writer, conf Config) *Logger {
 	return &Logger{log}
 }
 
+// LogBuildInfo is part of the [BuildInfoLogger] interface.
 func (l *Logger) LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string) {
 	event := l.Info().
 		Str("go_version", bld.GoVersion()).
@@ -86,6 +91,7 @@ func (l *Logger) LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string) {
 	event.Msg("buildinfo")
 }
 
+// LogRegisterRoute is part of the [RegisterRouteLogger] interface.
 func (l *Logger) LogRegisterRoute(route serv.Route) {
 	l.Debug().
 		Str("name", route.Name).
@@ -181,6 +187,7 @@ func (l *Logger) LogHealthCheckFailed(stat healthcheck.Status, err error) {
 		Msg("health check failed")
 }
 
+// SetOTELLogger is part of the [OTELLoggerSetter] interface.
 func (l *Logger) SetOTELLogger() {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
 		l.Err(err).Msg("otel error")
