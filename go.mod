@@ -6,9 +6,10 @@ require (
 	github.com/go-logr/zerologr v1.2.3
 	github.com/go-pogo/buildinfo v0.7.4
 	github.com/go-pogo/easytls v0.1.4
+	github.com/go-pogo/env v0.4.9
 	github.com/go-pogo/errors v0.12.0
 	github.com/go-pogo/healthcheck v0.2.1
-	github.com/go-pogo/serv v0.5.3
+	github.com/go-pogo/serv v0.6.0
 	github.com/go-pogo/telemetry v0.2.3
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.10.0
@@ -24,7 +25,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 //   indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-pogo/env v0.4.9 // indirect
 	github.com/go-pogo/rawconv v0.6.3 // indirect
 	github.com/go-pogo/writing v0.2.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect

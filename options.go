@@ -12,6 +12,7 @@ import (
 	"github.com/go-pogo/healthcheck"
 	"github.com/go-pogo/serv"
 	"github.com/go-pogo/serv/accesslog"
+	"github.com/go-pogo/serv/response"
 	"github.com/go-pogo/telemetry"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 )
@@ -160,7 +161,7 @@ func WithIgnoreFaviconRoute() Option {
 			Name:    FaviconRoute,
 			Method:  http.MethodGet,
 			Pattern: "/favicon.ico",
-			Handler: accesslog.IgnoreHandler(serv.NoContentHandler()),
+			Handler: accesslog.IgnoreHandler(response.NoContentHandler()),
 		})
 		return nil
 	}

@@ -76,7 +76,7 @@ func New(name string, opts ...Option) (*Base, error) {
 	// wrap router
 	var handler http.Handler = base.router
 	if conf.server.AccessLog {
-		handler = accesslog.Middleware(conf.accessLogger(), handler)
+		handler = accesslog.NewHandler(handler, conf.accessLogger())
 	}
 	if base.telem != nil {
 		handler = otelhttp.NewHandler(handler, name,
