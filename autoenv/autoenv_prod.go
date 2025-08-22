@@ -6,6 +6,4 @@
 
 package autoenv
 
-func newLoader() Loader {
-	return NewProductionLoader()
-}
+func NewLoader() *Loader { return NewProductionLoader() }

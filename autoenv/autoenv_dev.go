@@ -11,7 +11,10 @@ import (
 	"runtime"
 )
 
-func newLoader() Loader {
-	n := runtime.Callers(0, make([]uintptr, 16))
-	return NewDevelopmentLoader(n-4, os.Args[1:]...)
+func NewLoader() *Loader {
+	n := SkipCaller
+	if SkipCaller < 0 {
+		n += runtime.Callers(0, make([]uintptr, CaptureCallers))
+	}
+	return NewDevelopmentLoader(n, os.Args[1:]...)
 }

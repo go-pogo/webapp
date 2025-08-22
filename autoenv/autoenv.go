@@ -5,24 +5,30 @@
 package autoenv
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
 
 	"github.com/go-pogo/env"
 	"github.com/go-pogo/env/dotenv"
-	"github.com/go-pogo/env/envfile"
 	"github.com/go-pogo/errors"
 )
 
-const ErrLoadEnvFile = "failed to load .env file"
+// SkipCaller skips the amount of callers when determining the absolute path of
+// the main.go file. When this value is negative, it is subtracted from the
+// amount of captured caller frames. Otherwise, the absolute value is used.
+var SkipCaller = -4
 
-// Load environment variables
-func Load() error { return newLoader().Load() }
+// CaptureCallers is the max amount of caller frames that should be captured
+// using [runtime.Callers] to determine the absolute path of the main.go file.
+var CaptureCallers uint8 = 16
 
-var loadOnce = sync.OnceValue(Load)
+var loadOnce = sync.OnceValue(func() error {
+	return NewLoader().Load()
+})
 
+// Unmarshal loads environment variables once using [NewLoader] and then decodes
+// v using a [env.NewDecoder].
 func Unmarshal(v any) error {
 	if err := loadOnce(); err != nil {
 		return err
@@ -30,60 +36,46 @@ func Unmarshal(v any) error {
 	return env.NewDecoder(env.System()).Decode(v)
 }
 
-type Loader interface {
-	Load() error
-}
-
-var _ Loader = (*ProductionLoader)(nil)
-
-type ProductionLoader struct {
+type Loader struct {
 	Dir string
+
+	env dotenv.ActiveEnvironment
 }
 
-func NewProductionLoader() *ProductionLoader {
-	return &ProductionLoader{Dir: "/"}
+// NewProductionLoader returns a new [Loader] configured for production
+// environments.
+func NewProductionLoader() *Loader {
+	return &Loader{Dir: "/"}
 }
 
-func (pl *ProductionLoader) Load() error {
-	if err := envfile.Load(filepath.Join(pl.Dir, ".env")); err != nil {
-		var pathErr *os.PathError
-		if !errors.As(err, &pathErr) {
-			return errors.Wrap(err, ErrLoadEnvFile)
-		}
-	}
-	return nil
-}
-
-var _ Loader = (*DevelopmentLoader)(nil)
-
-type DevelopmentLoader struct {
-	Dir string
-	Env dotenv.ActiveEnvironment
-}
-
-func NewDevelopmentLoader(skipCaller int, args ...string) *DevelopmentLoader {
+// NewDevelopmentLoader returns a new [Loader] configured for development
+// environments.
+func NewDevelopmentLoader(skipCaller int, args ...string) *Loader {
 	ae, _ := dotenv.GetActiveEnvironmentOr(args, dotenv.Development)
 	_, file, _, _ := runtime.Caller(skipCaller + 1)
 
-	return &DevelopmentLoader{
-		Env: ae,
+	return &Loader{
 		Dir: filepath.Dir(file),
+		env: ae,
 	}
 }
 
-func (dl *DevelopmentLoader) PrefixDir(path string) string {
+func (l *Loader) PrefixDir(path string) string {
 	if path == "" || filepath.IsAbs(path) {
 		return path
 	}
-	return filepath.Join(dl.Dir, path)
+	return filepath.Join(l.Dir, path)
 }
 
-func (dl *DevelopmentLoader) Load() error {
-	environ, err := dotenv.Read(dl.Dir, dl.Env).Environ()
+func (l *Loader) Load() error {
+	environ, err := dotenv.Read(l.Dir, l.env).Environ()
 	if err != nil {
+		var noFilesLoaded *dotenv.NoFilesLoadedError
+		if errors.As(err, &noFilesLoaded) {
+			return nil
+		}
 		return err
 	}
-
 	if err = env.Load(environ); err != nil {
 		return err
 	}
