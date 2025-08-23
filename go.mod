@@ -9,7 +9,7 @@ require (
 	github.com/go-pogo/env v0.4.9
 	github.com/go-pogo/errors v0.12.0
 	github.com/go-pogo/healthcheck v0.2.1
-	github.com/go-pogo/serv v0.6.0
+	github.com/go-pogo/serv v0.6.1
 	github.com/go-pogo/telemetry v0.2.3
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.10.0
