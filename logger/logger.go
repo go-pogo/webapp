@@ -35,7 +35,7 @@ type OTELLoggerSetter interface {
 }
 
 type Config struct {
-	Level         zerolog.Level `env:"LOG_LEVEL" default:"debug"`
+	Level         zerolog.Level `env:"LOG_LEVEL" default:"warn"`
 	WithTimestamp bool          `env:"LOG_TIMESTAMP" default:"true"`
 }
 
@@ -53,12 +53,12 @@ var (
 // Logger wraps a [zerolog.Logger] and implements several log interfaces.
 type Logger struct{ zerolog.Logger }
 
-// NewProductionLogger returns a production ready Logger.
+// NewProductionLogger returns a production ready [Logger].
 func NewProductionLogger(conf Config) *Logger {
 	return newLogger(os.Stdout, conf)
 }
 
-// NewDevelopmentLogger returns a Logger configured for development
+// NewDevelopmentLogger returns a [Logger] configured for development
 // environments.
 func NewDevelopmentLogger(conf Config) *Logger {
 	out := zerolog.NewConsoleWriter()
