@@ -12,7 +12,7 @@ require (
 	github.com/go-pogo/serv v0.6.1
 	github.com/go-pogo/telemetry v0.2.3
 	github.com/rs/zerolog v1.34.0
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
 )
