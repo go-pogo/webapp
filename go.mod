@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/go-logr/zerologr v1.2.3
-	github.com/go-pogo/buildinfo v0.7.4
+	github.com/go-pogo/buildinfo v0.8.0
 	github.com/go-pogo/easytls v0.1.4
 	github.com/go-pogo/env v0.5.0
 	github.com/go-pogo/errors v0.12.0
