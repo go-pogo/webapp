@@ -44,6 +44,6 @@ Additional detailed documentation is available at [pkg.go.dev][doc-url]
 
 ## License
 
-Copyright © 2024-2025 [Roel Schut](https://roelschut.nl). All rights reserved.
+Copyright © 2024-2026 [Roel Schut](https://roelschut.nl). All rights reserved.
 
 This project is governed by a BSD-style license that can be found in the [LICENSE](LICENSE) file.
