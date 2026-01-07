@@ -9,7 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
+	"runtime"
 	"time"
 
 	"github.com/go-logr/zerologr"
@@ -23,7 +23,8 @@ import (
 )
 
 type BuildInfoLogger interface {
-	LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string)
+	LogBuildInfo(bld *buildinfo.BuildInfo)
+	LogBuildInfoModules(bld *buildinfo.BuildInfo, modules ...string)
 }
 
 type RegisterRouteLogger interface {
@@ -35,8 +36,8 @@ type OTELLoggerSetter interface {
 }
 
 type Config struct {
-	Level         zerolog.Level `env:"LOG_LEVEL" default:"warn"`
-	WithTimestamp bool          `env:"LOG_TIMESTAMP" default:"true"`
+	Level         zerolog.Level `env:"LOG_LEVEL" default:"warn" description:"Valid levels are: debug, info, warn, error, fatal, panic"`
+	WithTimestamp bool          `env:"LOG_TIMESTAMP" default:"true" description:"Starts the log's line with a timestamp when true"`
 }
 
 var (
@@ -75,20 +76,45 @@ func newLogger(out io.Writer, conf Config) *Logger {
 }
 
 // LogBuildInfo is part of the [BuildInfoLogger] interface.
-func (l *Logger) LogBuildInfo(bld *buildinfo.BuildInfo, modules ...string) {
-	event := l.Info().
-		Str("go_version", bld.GoVersion()).
-		Str("version", bld.Version()).
-		Str("vcs_revision", bld.Revision()).
-		Time("vcs_time", bld.Time())
-
-	for _, name := range modules {
-		if mod := bld.Module(name); mod.Version != "" {
-			event.Str("module_"+path.Base(mod.Path), mod.Version)
-		}
+func (l *Logger) LogBuildInfo(bld *buildinfo.BuildInfo) {
+	if bld == nil {
+		return
 	}
 
-	event.Msg("buildinfo")
+	log := l.Info()
+	if bld.Version != "" {
+		log.Str("version", bld.Version)
+	}
+	if bld.Revision != "" {
+		log.Str("vcs_revision", bld.Revision)
+	}
+	if !bld.Time.IsZero() {
+		log.Time("vcs_time", bld.Time)
+	}
+
+	if bld.GoVersion != "" {
+		log.Str("go_version", bld.GoVersion)
+	} else {
+		log.Str("go_version", runtime.Version())
+	}
+	log.Msg("buildinfo")
+}
+
+// LogBuildInfoModules is part of the [BuildInfoLogger] interface.
+func (l *Logger) LogBuildInfoModules(bld *buildinfo.BuildInfo, modules ...string) {
+	if bld == nil {
+		return
+	}
+
+	for _, name := range modules {
+		if mod := bld.Module(name); mod != nil {
+			l.Info().
+				Str("path", mod.Path).
+				Str("version", mod.Version).
+				Str("checksum", mod.Sum).
+				Msg("module")
+		}
+	}
 }
 
 // LogRegisterRoute is part of the [RegisterRouteLogger] interface.

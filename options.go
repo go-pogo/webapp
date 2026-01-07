@@ -63,16 +63,21 @@ func WithBuildInfo(bld *buildinfo.BuildInfo) Option {
 	}
 }
 
-func WithBuildInfoVersion(altVersion string, modules ...string) Option {
+// WithReadBuildInfo reads build info using [buildinfo.Read]. It also logs the
+// read build when a logger implementing the [logger.BuildInfoLogger] interface
+// is set using [WithLogger].
+func WithReadBuildInfo() Option {
 	return func(base *Base, config *config) error {
-		bld, err := buildinfo.New(altVersion)
+		bld, err := buildinfo.Read()
 		if err != nil {
 			return err
 		}
-
 		if optFn := WithBuildInfo(bld); optFn != nil {
+			if config.name == "" {
+				_ = WithName(bld.AppName())(nil, config)
+			}
 			if config.logger != nil {
-				config.logger.LogBuildInfo(bld, modules...)
+				config.logger.LogBuildInfo(bld)
 			}
 			return optFn(base, config)
 		}
@@ -84,7 +89,11 @@ func WithTelemetryConfig(conf telemetry.Config) Option {
 	return func(base *Base, config *config) error {
 		builder := telemetry.NewBuilder(conf).Global().WithDefaultExporter()
 		if base.build != nil {
-			builder.TracerProvider.WithAttributes(semconv.ServiceVersion(base.build.Version()))
+			if base.build.Version != "" {
+				builder.TracerProvider.WithAttributes(
+					semconv.ServiceVersion(base.build.Version),
+				)
+			}
 			builder.TracerProvider.WithBuildInfo(base.build.Internal())
 		}
 
