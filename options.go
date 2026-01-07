@@ -24,8 +24,10 @@ const (
 )
 
 type ServerConfig struct {
-	Port      serv.Port `default:"8080"`
-	AccessLog bool      `default:"true"`
+	// Port for the server to listen on.
+	Port serv.Port `default:"8080"`
+	// AccessLog enables logging of requests and their response code when true.
+	AccessLog bool `default:"true"`
 	TLS       easytls.Config
 }
 
@@ -36,6 +38,14 @@ type config struct {
 	server   ServerConfig
 	servOpts []serv.Option
 	logger   Logger
+}
+
+func WithName(name string) Option {
+	return func(_ *Base, config *config) error {
+		config.name = name
+		config.withServerOpts(serv.WithName(name))
+		return nil
+	}
 }
 
 func WithLogger(log Logger) Option {
@@ -118,12 +128,16 @@ func WithServerConfig(conf ServerConfig) Option {
 
 func WithServerOption(opts ...serv.Option) Option {
 	return func(_ *Base, config *config) error {
-		if config.servOpts == nil {
-			config.servOpts = make([]serv.Option, 0, len(opts))
-		}
-		config.servOpts = append(config.servOpts, opts...)
+		config.withServerOpts(opts...)
 		return nil
 	}
+}
+
+func (c *config) withServerOpts(opts ...serv.Option) {
+	if c.servOpts == nil {
+		c.servOpts = make([]serv.Option, 0, len(opts))
+	}
+	c.servOpts = append(c.servOpts, opts...)
 }
 
 func WithHealthChecker(opts ...healthcheck.Option) Option {
@@ -176,14 +190,14 @@ func WithIgnoreFaviconRoute() Option {
 	}
 }
 
-func (c config) servLogger() serv.Logger {
+func (c *config) servLogger() serv.Logger {
 	if c.logger == nil {
 		return serv.NopLogger()
 	}
 	return c.logger
 }
 
-func (c config) accessLogger() accesslog.Logger {
+func (c *config) accessLogger() accesslog.Logger {
 	if c.logger == nil {
 		return accesslog.NopLogger()
 	}

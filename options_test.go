@@ -14,28 +14,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestWithName(t *testing.T) {
+	const want = "foobar"
+	base, err := New(WithName(want))
+	assert.NoError(t, err)
+	assert.Equal(t, want, base.Server().Name())
+}
+
 func TestWithServerConfig(t *testing.T) {
 	want := ServerConfig{Port: 12345}
-	base, err := New("", WithServerConfig(want))
+	base, err := New(WithServerConfig(want))
 	assert.NoError(t, err)
 	assert.Equal(t, want.Port.Addr(), base.server.Addr)
 }
 
 func TestWithHealthChecker(t *testing.T) {
 	t.Run("before", func(t *testing.T) {
-		base, err := New("")
+		base, err := New()
 		require.NoError(t, err)
 		assert.Nil(t, base.HealthChecker())
 	})
 	t.Run("after", func(t *testing.T) {
-		base, err := New("", WithHealthChecker())
+		base, err := New(WithHealthChecker())
 		assert.NoError(t, err)
 		assert.NotNil(t, base.HealthChecker())
 	})
 }
 
 func TestWithIgnoreFaviconRoute(t *testing.T) {
-	base, err := New("", WithIgnoreFaviconRoute())
+	base, err := New(WithIgnoreFaviconRoute())
 	assert.NoError(t, err)
 
 	srv := httptest.NewServer(base.RouteHandler().(serv.Router))

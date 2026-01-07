@@ -46,11 +46,13 @@ type Base struct {
 	server serv.Server
 }
 
-func New(name string, opts ...Option) (*Base, error) {
-	conf := config{name: name}
-	base := &Base{router: &router{ServeMux: serv.NewServeMux()}}
+func New(opts ...Option) (*Base, error) {
+	base := &Base{
+		router: &router{ServeMux: serv.NewServeMux()},
+	}
 
 	// apply options
+	var conf config
 	var err error
 	for _, opt := range opts {
 		if opt == nil {
@@ -65,7 +67,6 @@ func New(name string, opts ...Option) (*Base, error) {
 	// setup server
 	if err = base.server.With(
 		conf.server.Port,
-		serv.WithName(conf.name),
 		serv.WithLogger(conf.servLogger()),
 		serv.WithTLSConfig(easytls.DefaultTLSConfig(), conf.server.TLS),
 		serv.With(conf.servOpts),
@@ -79,7 +80,8 @@ func New(name string, opts ...Option) (*Base, error) {
 		handler = accesslog.NewHandler(handler, conf.accessLogger())
 	}
 	if base.telem != nil {
-		handler = otelhttp.NewHandler(handler, name,
+		handler = otelhttp.NewHandler(handler, conf.name,
+			otelhttp.WithServerName(base.server.Name()),
 			otelhttp.WithMessageEvents(otelhttp.ReadEvents, otelhttp.WriteEvents),
 			otelhttp.WithMeterProvider(base.telem.MeterProvider()),
 			otelhttp.WithTracerProvider(base.telem.TracerProvider()),
@@ -89,6 +91,8 @@ func New(name string, opts ...Option) (*Base, error) {
 	base.server.Handler = handler
 	return base, nil
 }
+
+func (base *Base) BuildInfo() *buildinfo.BuildInfo { return base.build }
 
 func (base *Base) Telemetry() *telemetry.Telemetry { return base.telem }
 
@@ -118,8 +122,9 @@ func (base *Base) Run(ctx context.Context) error {
 
 func (base *Base) Shutdown(ctx context.Context) error {
 	// shutdown server before shutting down other services
-	serverErr := base.server.Shutdown(ctx)
-	telemErr := errors.Append(base.telem.ForceFlush(ctx), base.telem.Shutdown(ctx))
-
-	return errors.Append(serverErr, telemErr)
+	err := base.server.Shutdown(ctx)
+	// force flush before shutting down telemetry providers
+	err = errors.Append(err, base.telem.ForceFlush(ctx))
+	err = errors.Append(err, base.telem.Shutdown(ctx))
+	return err
 }
