@@ -28,8 +28,8 @@ github.com/go-pogo/healthcheck v0.2.1 h1:fV7t8Cu56Y1GAIh0z9y4Vdqy51DgJrPk9pDkXLV
 github.com/go-pogo/healthcheck v0.2.1/go.mod h1:fpwLVIEtiyQ6IOZcsSp4CFdcRMoNTvAEmekbOD9+kvY=
 github.com/go-pogo/rawconv v0.6.4 h1:1foIm8fv8yCQ3p+0qr+bUZro6+lEFkTZVtW95a6dr4s=
 github.com/go-pogo/rawconv v0.6.4/go.mod h1:JQFjR1C+XDz6kwxKnn7YzPTsSzNiOnD7EJuwoQ7Ab00=
-github.com/go-pogo/serv v0.6.2 h1:p+7zyexapF2sPp7sW10Rl8MrTZsdc9qbXPPDAxk6WYw=
-github.com/go-pogo/serv v0.6.2/go.mod h1:MPzb3mc/wqE0kIuVbgP94peXQu/O4eU0RbRiD0sBaBw=
+github.com/go-pogo/serv v0.6.3 h1:dQmxx/aGZkH2gG9qtCEFSfydx6p6jW6XpmWwrVWNF5M=
+github.com/go-pogo/serv v0.6.3/go.mod h1:MPzb3mc/wqE0kIuVbgP94peXQu/O4eU0RbRiD0sBaBw=
 github.com/go-pogo/telemetry v0.2.4 h1:z3nps/+pdiJY/NPG+x1dU+kcnJ4k7y/Lw4kzxmAcgfQ=
 github.com/go-pogo/telemetry v0.2.4/go.mod h1:F/RDZltetbE51DpX3JAlT/lG2RmIHdcv/Li5RezAvwM=
 github.com/go-pogo/writing v0.2.1 h1:ADbRge9Y8NP0IH5glF5rtWHbeisQVj4ST2RmDVWVN2g=

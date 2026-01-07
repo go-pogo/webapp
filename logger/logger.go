@@ -144,10 +144,15 @@ func (l *Logger) LogAccess(_ context.Context, det accesslog.Details, req *http.R
 		lvl = zerolog.DebugLevel
 	}
 
-	l.WithLevel(lvl).
+	event := l.WithLevel(lvl).
 		Str("server", det.ServerName).
-		Str("handler", det.HandlerName).
-		Str("user_agent", det.UserAgent).
+		Str("handler", det.HandlerName)
+
+	if det.RequestID != "" {
+		event.Str("request_id", det.RequestID)
+	}
+
+	event.Str("user_agent", det.UserAgent).
 		Str("remote_addr", accesslog.RemoteAddr(req)).
 		Str("method", req.Method).
 		Str("request_uri", accesslog.RequestURI(req)).
