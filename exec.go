@@ -6,6 +6,7 @@ package webapp
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-pogo/errors"
@@ -15,6 +16,7 @@ import (
 
 const (
 	ErrDuringRun      errors.Msg = "an error occurred during run"
+	ErrRunCanceled    errors.Msg = "run canceled"
 	ErrDuringShutdown errors.Msg = "an error occurred during shutdown"
 )
 
@@ -25,8 +27,12 @@ func Run(ctx context.Context, targets ...func(ctx context.Context) error) error 
 	}
 
 	err := grp.Wait()
-	if err != nil && !errors.Is(err, context.Canceled) {
-		return errors.Wrap(err, ErrDuringRun)
+	if err != nil {
+		wrap := ErrDuringRun
+		if errors.Is(err, context.Canceled) || strings.HasSuffix(errors.Cause(err).Error(), "signal received") {
+			wrap = ErrRunCanceled
+		}
+		return errors.Wrap(err, wrap)
 	}
 	return nil
 }
