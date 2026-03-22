@@ -10,7 +10,7 @@ require (
 	github.com/go-pogo/errors v0.12.0
 	github.com/go-pogo/healthcheck v0.2.1
 	github.com/go-pogo/serv v0.6.3
-	github.com/go-pogo/telemetry v0.2.4
+	github.com/go-pogo/telemetry v0.2.5
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
