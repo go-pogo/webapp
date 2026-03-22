@@ -24,7 +24,11 @@ func Run(ctx context.Context, targets ...func(ctx context.Context) error) error 
 		grp.Go(targets[i])
 	}
 
-	return errors.Wrap(grp.Wait(), ErrDuringRun)
+	err := grp.Wait()
+	if err != nil && !errors.Is(err, context.Canceled) {
+		return errors.Wrap(err, ErrDuringRun)
+	}
+	return nil
 }
 
 // Shutdown calls all targets and blocks until all are called and have returned.
