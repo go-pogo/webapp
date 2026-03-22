@@ -14,7 +14,7 @@ import (
 	"github.com/go-pogo/serv/accesslog"
 	"github.com/go-pogo/serv/response"
 	"github.com/go-pogo/telemetry"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 )
 
 const (
@@ -112,6 +112,8 @@ func WithTelemetryConfig(conf telemetry.Config) Option {
 		if err != nil {
 			return err
 		}
+
+		base.router.trace = true
 		if config.logger != nil {
 			config.logger.SetOTELLogger()
 		}

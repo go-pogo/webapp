@@ -10,13 +10,17 @@ import (
 	"github.com/go-pogo/serv"
 	"github.com/go-pogo/webapp/logger"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var _ serv.Router = (*router)(nil)
 
 type router struct {
 	*serv.ServeMux
-	log logger.RegisterRouteLogger
+
+	log   logger.RegisterRouteLogger
+	trace bool
 }
 
 func (mux *router) Handle(pattern string, handler http.Handler) {
@@ -37,7 +41,18 @@ func (mux *router) HandleRoute(route serv.Route) {
 	if mux.log != nil {
 		mux.log.LogRegisterRoute(route)
 	}
+	if mux.trace {
+		attr := semconv.HTTPRoute(route.Name)
+		handler := route.Handler
 
-	route.Handler = otelhttp.WithRouteTag(route.Pattern, route.Handler)
+		route.Handler = http.HandlerFunc(func(wri http.ResponseWriter, req *http.Request) {
+			span := trace.SpanFromContext(req.Context())
+			span.SetAttributes(attr)
+
+			labeler, _ := otelhttp.LabelerFromContext(req.Context())
+			labeler.Add(attr)
+			handler.ServeHTTP(wri, req)
+		})
+	}
 	mux.ServeMux.HandleRoute(route)
 }
