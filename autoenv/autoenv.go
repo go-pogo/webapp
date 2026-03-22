@@ -68,7 +68,11 @@ func (l *Loader) PrefixDir(path string) string {
 }
 
 func (l *Loader) Load() error {
-	environ, err := dotenv.Read(l.Dir, l.env).Environ()
+	reader := dotenv.Read(l.Dir, l.env)
+	//goland:noinspection GoUnhandledErrorResult
+	defer reader.Close()
+
+	environ, err := reader.Environ()
 	if err != nil {
 		var noFilesLoaded *dotenv.NoFilesLoadedError
 		if errors.As(err, &noFilesLoaded) {
